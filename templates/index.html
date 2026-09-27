@@ -1,0 +1,13 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ONE PICK LEAGUE</title><meta name="theme-color" content="#17254b"><link rel="manifest" href="/static/manifest.webmanifest"><link rel="apple-touch-icon" href="/static/icon-192.png"><link rel="stylesheet" href="/static/app.css"></head>
+<body><main class="shell landing"><div class="logo">⚡ ONE PICK LEAGUE</div>
+<section class="hero"><div class="kicker">주식모임 주간 챌린지</div><h1>한 종목으로<br>일주일 승부</h1><p>각자 한 종목을 고르고 금요일 종가로 순위를 겨룹니다.</p></section>
+<section class="card"><h3>새 방 만들기</h3><input id="roomName" class="input" placeholder="예: 일요일 주식스터디"><input id="pin" class="input" inputmode="numeric" placeholder="방장 PIN 예: 2580"><button class="btn primary full" onclick="createRoom()">방 만들기</button></section>
+<div class="or">또는</div><section class="card"><h3>참가코드로 입장</h3><input id="code" class="input" maxlength="6" placeholder="6자리 코드"><button class="btn secondary full" onclick="joinByCode()">입장하기</button></section>
+</main><script>
+async function createRoom(){let r=await fetch('/api/rooms',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:roomName.value.trim()||'주식모임',pin:pin.value.trim()||'1234'})});let d=await r.json();location.href=d.url}
+function joinByCode(){let c=code.value.trim().toUpperCase();if(c)location.href='/room/'+c}
+</script><script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("/static/sw.js"));
+}
+</script></body></html>

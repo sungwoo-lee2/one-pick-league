@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: one-pick-league
+    env: docker
+    plan: starter
+    autoDeploy: true
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DB_PATH
+        value: /var/data/league.db
+      - key: PORT
+        value: 10000
+    disk:
+      name: one-pick-data
+      mountPath: /var/data
+      sizeGB: 1

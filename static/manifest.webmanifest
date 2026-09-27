@@ -1,0 +1,21 @@
+{
+  "name": "ONE PICK LEAGUE",
+  "short_name": "ONE PICK",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09101e",
+  "theme_color": "#17254b",
+  "description": "주식모임 1인 1종목 주간 챌린지",
+  "icons": [
+    {
+      "src": "/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

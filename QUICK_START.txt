@@ -1,0 +1,18 @@
+ONE PICK LEAGUE v6 빠른 시작
+
+1. GitHub에 이 폴더 업로드
+2. Render에서 Blueprint로 연결
+3. 생성된 URL을 휴대폰으로 열기
+4. QR 또는 초대링크로 참가자 입장
+5. iPhone: Safari > 공유 > 홈 화면에 추가
+6. Android: Chrome > 메뉴 > 앱 설치
+
+기본 기능:
+- 방 생성 / 방장 PIN
+- QR 참가
+- 종목 비공개 제출
+- 동시 공개
+- LIVE 순위
+- 시즌/월간 랭킹
+- 결과 이미지 저장
+- PWA 설치

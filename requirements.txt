@@ -1,0 +1,5 @@
+Flask>=3.0,<4
+gunicorn>=22.0
+pykrx>=1.0
+pandas>=2.0
+qrcode[pil]>=7.4

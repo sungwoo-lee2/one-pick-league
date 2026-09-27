@@ -1,0 +1,87 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><title>ONE PICK LEAGUE</title><meta name="theme-color" content="#17254b"><link rel="manifest" href="/static/manifest.webmanifest"><link rel="apple-touch-icon" href="/static/icon-192.png"><link rel="stylesheet" href="/static/app.css"></head>
+<body><main class="shell phone">
+<div class="top"><div class="logo">⚡ ONE PICK</div><span class="pill" id="week"></span></div>
+<section class="hero compact"><div class="kicker" id="roomName">주식모임</div><h1>주간 종목 챌린지</h1><div class="codebox"><b id="code">{{code}}</b><button class="mini" onclick="copyCode()">코드 복사</button></div><div class="inviteBtns"><button class="mini" onclick="copyInvite()">초대 링크</button><button class="mini" onclick="showQR()">QR 입장</button></div></section>
+<nav class="tabs"><button class="active" onclick="tab('home',this)">홈</button><button onclick="tab('pick',this)">종목선택</button><button onclick="tab('race',this)">LIVE</button><button onclick="tab('rank',this)">랭킹</button><button onclick="tab('admin',this)">방장</button></nav>
+
+<section id="home" class="page active">
+<div class="card installCard"><div class="head"><h3>📲 앱처럼 사용하기</h3><span class="muted">설치 선택</span></div><p class="muted">iPhone은 공유 → 홈 화면에 추가, Android는 브라우저 메뉴 → 앱 설치를 선택하세요.</p></div>
+<div class="card" id="joinCard"><h3>이 방에 참가하기</h3><input id="playerName" class="input" placeholder="이름"><button class="btn primary full" onclick="join()">참가하기</button></div>
+<div class="card" id="switchCard" style="display:none"><p class="muted">이 브라우저에서는 한 번에 한 명으로 참가합니다.</p><button class="btn secondary full" onclick="showJoin()">다른 참가자 등록하기</button></div>
+<div class="stats"><div><span>참가자</span><b id="playerCount">0</b></div><div><span>제출완료</span><b id="submittedCount">0</b></div><div><span>공개상태</span><b id="revealState">대기</b></div></div>
+<div class="card"><div class="head"><h3>참가자</h3><span class="muted">실시간 갱신</span></div><div id="players"></div></div>
+<div class="card"><div class="head"><h3>🏅 이번 시즌 배지</h3><span class="muted">자동 획득</span></div><div id="badges"></div></div>
+</section>
+
+<section id="pick" class="page">
+<div class="card"><h3>내 ONE PICK</h3><input id="stock" class="input" placeholder="선택 종목명 직접 입력" maxlength="40"><textarea id="reason" class="input" placeholder="선택 사유를 적어주세요" maxlength="300" rows="3"></textarea><button class="btn primary full" onclick="submitPick()">🔒 비공개 제출</button></div>
+<div class="card"><div class="head"><h3>제출 현황</h3><span class="muted">종목은 전체 공개 전까지 비공개 · 사유는 바로 공개</span></div><div id="submitList"></div></div>
+</section>
+
+<section id="race" class="page"><div class="card"><div class="head"><h3>🏁 LIVE 순위</h3><span class="muted">주간 수익률</span></div><div id="raceList"></div></div></section>
+
+<section id="rank" class="page">
+<div class="card"><div class="head"><h3>👑 시즌 랭킹</h3><span class="muted">누적 승점</span></div><div id="season"></div></div>
+<div class="card"><div class="head"><h3>🗓 월간 챔피언</h3><span class="muted">최근 기록</span></div><div id="monthly"></div></div>
+<div class="card"><div class="head"><h3>📚 지난 결과</h3><span class="muted">최근 12주</span></div><div id="history"></div></div>
+<button class="btn secondary full" onclick="shareCard()">결과 카드 보기</button>
+</section>
+
+<section id="admin" class="page">
+<div class="card" id="adminLogin"><h3>방장 로그인</h3><input id="adminPin" class="input" inputmode="numeric" placeholder="방장 PIN"><button class="btn primary full" onclick="adminLoginFn()">로그인</button></div>
+<div id="adminPanel" style="display:none">
+<div class="card"><h3>방장 컨트롤</h3><button class="btn good full" onclick="reveal()">🎉 전원 종목 공개</button><button class="btn good full" onclick="finalize()">🏆 이번 주 결과 확정</button><button class="btn danger full" onclick="resetWeek()">현재 주차 초기화</button></div>
+<div class="card"><div class="head"><h3>가격 직접 입력</h3><span class="muted">시작가와 종료가 입력</span></div><div id="prices"></div></div>
+</div></section>
+
+<div id="shareModal" class="modal" onclick="this.classList.remove('show')"><div class="sharecard" onclick="event.stopPropagation()"><div class="sharelogo">ONE PICK LEAGUE</div><div class="sharetitle">이번 주 TOP 3</div><div id="shareRows"></div><div class="sharefoot" id="shareFoot"></div><button class="btn primary full" onclick="saveCardImage()">이미지 저장</button><button class="btn secondary full" onclick="document.getElementById('shareModal').classList.remove('show')">닫기</button></div></div>
+<div id="qrModal" class="modal" onclick="this.classList.remove('show')"><div class="sharecard" onclick="event.stopPropagation()"><div class="sharetitle">QR로 입장</div><img id="qrImg" class="qrimg"><div class="sharefoot">같은 네트워크 또는 공개 배포 주소에서 사용하세요.</div><button class="btn secondary full" onclick="document.getElementById('qrModal').classList.remove('show')">닫기</button></div></div>
+<canvas id="cardCanvas" width="1200" height="675" style="display:none"></canvas>
+<div id="toast" class="toast"></div></main>
+
+<script>
+const CODE="{{code}}";let STATE=null,switchingParticipant=false;
+function toast(t){const x=document.getElementById('toast');x.textContent=t;x.classList.add('show');setTimeout(()=>x.classList.remove('show'),1700)}
+function tab(id,b){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
+async function api(url,opt={}){let r=await fetch(url,opt),d=await r.json();if(!r.ok)throw new Error(d.error||'오류');return d}
+async function join(){try{await api(`/api/rooms/${CODE}/join`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:document.getElementById("playerName").value.trim()})});switchingParticipant=false;toast('참가했습니다');refresh()}catch(e){toast(e.message)}}
+function showJoin(){switchingParticipant=true;document.getElementById('playerName').value='';joinCard.style.display='block';switchCard.style.display='none';document.getElementById('playerName').focus()}
+async function adminLoginFn(){try{await api(`/api/rooms/${CODE}/admin-login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:adminPin.value})});toast('방장 로그인 완료');refresh()}catch(e){toast(e.message)}}
+async function submitPick(){try{await api(`/api/rooms/${CODE}/pick`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({stock:document.getElementById('stock').value.trim(),reason:document.getElementById('reason').value.trim()})});toast('비공개 제출 완료');refresh()}catch(e){toast(e.message)}}
+async function reveal(){try{await api(`/api/rooms/${CODE}/reveal`,{method:'POST'});toast('전체 공개!');refresh()}catch(e){toast(e.message)}}
+async function setPrice(pid,k,v){try{let p=STATE.players.find(x=>x.id===pid),start=k==='start'?v:p.start,end=k==='end'?v:p.end;await api(`/api/rooms/${CODE}/prices`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({player_id:pid,start,end})});refresh()}catch(e){toast(e.message)}}
+async function finalize(){try{await api(`/api/rooms/${CODE}/finalize`,{method:'POST'});toast('결과 확정');refresh()}catch(e){toast(e.message)}}
+async function resetWeek(){if(!confirm('현재 주차 선택/가격을 초기화할까요?'))return;try{await api(`/api/rooms/${CODE}/reset-week`,{method:'POST'});toast('초기화 완료');refresh()}catch(e){toast(e.message)}}
+function copyCode(){navigator.clipboard?.writeText(CODE);toast('참가코드 복사')}
+function copyInvite(){navigator.clipboard?.writeText(STATE?.invite_url||location.href);toast('초대 링크 복사')}
+function showQR(){qrImg.src=`/room/${CODE}/qr?x=${Date.now()}`;qrModal.classList.add('show')}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function fmt(v){return v==null?'-':(v>=0?'+':'')+v.toFixed(2)+'%'}
+function shareCard(){if(!STATE)return;let top=STATE.ranking.filter(x=>x.ret!=null).slice(0,3);shareRows.innerHTML=top.map((x,i)=>`<div class="sharerow"><span>${['🥇','🥈','🥉'][i]}</span><div><b>${x.name}</b><small>${x.stock||''}</small></div><strong>${fmt(x.ret)}</strong></div>`).join('')||'<p>아직 결과가 없습니다.</p>';shareFoot.textContent=`${STATE.room.name} · ${STATE.week}`;shareModal.classList.add('show')}
+function saveCardImage(){
+ if(!STATE)return;
+ const c=cardCanvas,ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);
+ let g=ctx.createLinearGradient(0,0,1200,675);g.addColorStop(0,'#182d5d');g.addColorStop(1,'#0d1425');ctx.fillStyle=g;ctx.fillRect(0,0,1200,675);
+ ctx.fillStyle='#9fb7e7';ctx.font='28px system-ui';ctx.fillText('ONE PICK LEAGUE',70,80);
+ ctx.fillStyle='white';ctx.font='bold 58px system-ui';ctx.fillText('이번 주 TOP 3',70,155);
+ let top=STATE.ranking.filter(x=>x.ret!=null).slice(0,3), ys=[270,390,510];
+ top.forEach((x,i)=>{ctx.font='bold 42px system-ui';ctx.fillStyle=i===0?'#ffd76a':'white';ctx.fillText(`${i+1}위  ${x.name}`,90,ys[i]);ctx.font='30px system-ui';ctx.fillStyle='#aebee0';ctx.fillText(x.stock||'',390,ys[i]);ctx.font='bold 38px system-ui';ctx.fillStyle=x.ret>=0?'#4bd28d':'#ff7382';ctx.fillText(fmt(x.ret),880,ys[i])});
+ ctx.fillStyle='#8297ba';ctx.font='24px system-ui';ctx.fillText(`${STATE.room.name} · ${STATE.week}`,70,620);
+ const a=document.createElement('a');a.download=`one_pick_${STATE.week}.png`;a.href=c.toDataURL('image/png');a.click();
+}
+function makeBadges(p){let b=[];if(p.wins>=3)b.push('👑 3회 우승');if(p.top3>=5)b.push('🏅 TOP3 단골');if(p.best_streak>=3)b.push('🔥 3주 연속 플러스');if(p.weeks>=10)b.push('🎖 10주 참가');return b}
+async function refresh(){try{STATE=await api(`/api/rooms/${CODE}/state`);roomName.textContent=STATE.room.name;week.textContent=STATE.week;playerCount.textContent=STATE.players.length;submittedCount.textContent=STATE.players.filter(x=>x.submitted).length;revealState.textContent=STATE.room.revealed?'공개':'대기';joinCard.style.display=STATE.me&&!switchingParticipant?'none':'block';switchCard.style.display=STATE.me&&!switchingParticipant?'block':'none';if(STATE.admin){adminLogin.style.display='none';adminPanel.style.display='block'}
+players.innerHTML=STATE.players.map(p=>`<div class="member"><div class="avatar">${p.name[0]}</div><div class="grow"><b>${p.name}</b><small>${p.submitted?'선택 완료':'선택 대기'}</small></div><span class="status ${p.submitted?'done':''}">${p.submitted?'완료':'대기'}</span></div>`).join('')||'<p class="muted">참가자가 없습니다.</p>';
+badges.innerHTML=STATE.players.map(p=>{let bs=makeBadges(p);return bs.length?`<div class="badgeRow"><b>${p.name}</b><span>${bs.join(' · ')}</span></div>`:''}).join('')||'<p class="muted">아직 획득한 배지가 없습니다.</p>';
+submitList.innerHTML=STATE.players.map(p=>`<div class="member"><div class="avatar">${p.name[0]}</div><div class="grow"><b>${p.name}</b><small>${p.submitted?(STATE.room.revealed?`${esc(p.stock)} · 사유: ${esc(p.reason||'미입력')}`:`🔒 종목 비공개 · 사유: ${esc(p.reason||'미입력')}`):'아직 제출 전'}</small></div></div>`).join('');
+raceList.innerHTML=STATE.ranking.length?STATE.ranking.map((p,i)=>`<div class="rankrow"><span class="rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}</span><div class="grow"><b>${p.name}</b><small>${STATE.room.revealed?(p.stock||''):'비공개 종목'}</small></div><strong class="${p.ret==null?'':p.ret>=0?'pos':'neg'}">${fmt(p.ret)}</strong></div>`).join(''):'<p class="muted">아직 순위가 없습니다.</p>';
+let s=[...STATE.players].sort((a,b)=>b.points-a.points||b.wins-a.wins);season.innerHTML=s.length?`<table><tr><th>순위</th><th>참가자</th><th>승점</th><th>우승</th><th>TOP3</th></tr>${s.map((p,i)=>`<tr><td>${i+1}</td><td><b>${p.name}</b></td><td>${p.points}</td><td>${p.wins}</td><td>${p.top3}</td></tr>`).join('')}</table>`:'<p class="muted">시즌 기록 없음</p>';
+monthly.innerHTML=STATE.monthly_champs.length?STATE.monthly_champs.map(x=>`<div class="badgeRow"><b>${x.month}</b><span>🏆 ${x.name} · ${x.points}점</span></div>`).join(''):'<p class="muted">월간 기록 없음</p>';
+prices.innerHTML=STATE.players.filter(p=>p.submitted).map(p=>`<div class="priceRow"><div><b>${p.name}</b><small>${p.stock||'비공개'}</small></div><input type="number" placeholder="시작가" value="${p.start??''}" onchange="setPrice(${p.id},'start',this.value)"><input type="number" placeholder="종가" value="${p.end??''}" onchange="setPrice(${p.id},'end',this.value)"></div>`).join('')||'<p class="muted">제출 종목 없음</p>';
+history.innerHTML=STATE.history.length?STATE.history.map(h=>`<div class="historyWeek"><b>${h.week}</b>${h.results.slice(0,3).map(r=>`<span>${r.rank}. ${r.name} · ${r.stock} · ${fmt(r.ret)}</span>`).join('')}</div>`).join(''):'<p class="muted">지난 기록 없음</p>';
+}catch(e){console.error(e)}}refresh();setInterval(refresh,5000);
+</script><script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("/static/sw.js"));
+}
+</script></body></html>
